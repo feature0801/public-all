@@ -1,0 +1,212 @@
+{
+	// [공통] 폰트 크기
+	"editor.fontSize": 14,
+	// [공통] 폰트 줄높이
+	"editor.lineHeight": 1.5,
+	// [공통] 탭 4칸
+	"editor.tabSize": 4,
+	// [공통] 파일 내용 기반 들여쓰기 자동 감지 끔
+	"editor.detectIndentation": false,
+	// [공통] hover 설명 끔
+	"editor.hover.enabled": "off",
+	// [공통] 미니맵 끔
+	"editor.minimap.enabled": false,
+	// [공통] 세로 가이드선 없음
+	"editor.rulers": [],
+	// [공통] 스크롤시 현재 위치(함수·제목)를 상단에 고정
+	"editor.stickyScroll.enabled": false,
+	// [공통] 브레드크럼(상단 경로 표시줄) 끔
+	"breadcrumbs.enabled": false,
+	// [공통] 저장시 자동 서식 (ESLint 사용시 false)
+	"editor.formatOnSave": true,
+	// [공통] 개행문자 LF (크로스플랫폼 표준 · 맥/윈도우 혼용시 CRLF 섞임 방지)
+	"files.eol": "\n",
+	// [공통] 배치 파일만 CRLF (구형 cmd.exe 가 LF 단독 .bat 의 goto·라벨 처리를 틀림)
+	"[bat]": {
+		"files.eol": "\r\n"
+	},
+	// [공통] 저장시 줄끝 공백 제거 ([markdown] 은 예외)
+	"files.trimTrailingWhitespace": true,
+	// [공통] 저장시 파일 끝 빈 줄 1개 보장
+	"files.insertFinalNewline": true,
+	// [공통] 포커스가 벗어나면 자동저장
+	"files.autoSave": "onFocusChange",
+	// [공통] 확장자 → 언어 매핑 (xml · svg 는 내장 xml 언어가 처리하므로 매핑 안 함)
+	"files.associations": {},
+	// [공통] 하위 디렉토리 펼쳐서 표시
+	"explorer.compactFolders": false,
+	// [공통] 편집 모드로 파일 오픈
+	"workbench.editor.enablePreview": false,
+	// [공통] copilot 끔
+	"github.copilot.enable": {
+		"*": false
+	},
+	// [공통] 검색 제외
+	"search.exclude": {
+		"node_modules": true,
+		"**/package-lock.json": true
+	},
+	// [공통] 탐색기 숨김 (false = 사용자 설정에서 숨겨도 강제 표시)
+	"files.exclude": {
+		"**/.git": true,
+		"**/.svn": true,
+		"**/.hg": true,
+		"**/CVS": true,
+		"**/.DS_Store": true,
+		"**/.next": true,
+		"**/.nuxt": true,
+		"**/.output": true,
+		"**/.venv": true,
+		"**/node_modules": true,
+		"**/www": true,
+		"**/.obsidian": true,
+		"**/.claude": true,
+		"next-env.d.ts": true,
+		"yarn.lock": true,
+		".gitignore": false,
+		".prettierignore": false,
+		".eslintrc.js": false,
+		".eslintrc.json": false,
+		".eslintignore": false,
+		"tsconfig.json": false,
+		"package-lock.json": false
+	},
+
+	// [MD] 마크다운 전용 에디터 동작
+	"[markdown]": {
+		// 저장시 자동 서식 끔 (문서는 수동 정렬)
+		"editor.formatOnSave": true,
+		// 입력중 자동 서식 끔
+		"editor.formatOnType": true,
+		// 붙여넣기시 자동 서식 끔
+		"editor.formatOnPaste": true,
+		// 화면 너비에 맞춰 줄바꿈
+		"editor.wordWrap": "on",
+		// 줄바꿈시 들여쓰기 유지 (리스트 가독성)
+		"editor.wrappingIndent": "same",
+		// 리스트 들여쓰기는 공백 2칸 (탭은 일부 렌더러에서 깨짐)
+		"editor.tabSize": 2,
+		// 탭 대신 공백 입력
+		"editor.insertSpaces": true,
+		// 줄끝 공백 2개 = 강제 줄바꿈 문법이므로 보존
+		"files.trimTrailingWhitespace": false,
+		// 링크·이미지 미리보기용 hover 켬
+		"editor.hover.enabled": "on",
+		// 문서 내 단어 기반 자동완성
+		"editor.quickSuggestions": {
+			"other": "on",
+			"comments": "off",
+			"strings": "off"
+		},
+		// 한글이 '모호한 유니코드'로 강조되는 현상 방지
+		"editor.unicodeHighlight.ambiguousCharacters": false,
+		// 비 ASCII 문자(한글) 강조 방지
+		"editor.unicodeHighlight.nonBasicASCII": false,
+		// 포멧터 지정
+		"editor.defaultFormatter": "vscode.markdown-language-features"
+	},
+
+	// [WEB] prettier 탭 문자 사용
+	"prettier.useTabs": true,
+	// [WEB] prettier 탭 너비
+	"prettier.tabWidth": 4,
+	// [WEB] prettier 줄바꿈 기준 너비
+	"prettier.printWidth": 250,
+	// [WEB] 라이브서버 포트
+	"liveServer.settings.port": 5502,
+	// [WEB] HTML — prettier
+	"[html]": {
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+		"editor.formatOnPaste": true,
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	// [WEB] CSS — prettier
+	"[css]": {
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+		"editor.formatOnPaste": true,
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	// [WEB] JavaScript — prettier
+	"[javascript]": {
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	// [WEB] JavaScript JSX — prettier
+	"[javascriptreact]": {
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	// [WEB] TypeScript — prettier
+	"[typescript]": {
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	// [WEB] TypeScript TSX — prettier
+	"[typescriptreact]": {
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	// [WEB] Vue — prettier
+	"[vue]": {
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+		"editor.formatOnPaste": true,
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	// [WEB] JSON — prettier
+	"[json]": {
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+		"editor.formatOnPaste": true,
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	// [WEB] JSON with Comments — prettier (.vscode 설정 파일)
+	"[jsonc]": {
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+		"editor.formatOnPaste": true,
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	// [WEB] XML — redhat.vscode-xml
+	"[xml]": {
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+		"editor.formatOnPaste": true,
+		"editor.defaultFormatter": "redhat.vscode-xml"
+	},
+	// [WEB] YAML — prettier (들여쓰기는 자동 계산)
+	"[yaml]": {
+		"editor.autoIndent": "advanced",
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+
+	// [PY] Python — autopep8
+	"[python]": {
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+		"editor.formatOnPaste": true,
+		"editor.defaultFormatter": "ms-python.autopep8"
+	},
+
+	// [JAVA] Java — redhat.java
+	"[JAVA]": {
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+		"editor.formatOnPaste": true,
+		"editor.defaultFormatter": "redhat.java"
+	},
+
+	// [DART] Dart — dart-code.dart-code
+	"[dart]": {
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+		"editor.formatOnPaste": true,
+		"editor.defaultFormatter": "dart-code.dart-code"
+	}
+}

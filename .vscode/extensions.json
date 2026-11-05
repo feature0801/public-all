@@ -1,0 +1,36 @@
+{
+	"recommendations": [
+		// [공통] 코드정렬 포매터
+		"esbenp.prettier-vscode",
+		// [공통] 아이콘테마
+		"pkief.material-icon-theme",
+
+		// [WEB] 라이브서버
+		"ritwickdey.liveserver",
+		// [WEB] auto-close-tag
+		"formulahendry.auto-close-tag",
+		// [WEB] auto-rename-tag
+		"formulahendry.auto-rename-tag",
+		// [WEB] color-highlight
+		"naumovs.color-highlight",
+
+		// [PY] Python
+		"ms-python.python",
+		// [PY] autopep8 포매터 (python 확장에서 분리된 별도 확장 — settings.json의 [python] defaultFormatter가 이걸 요구)
+		"ms-python.autopep8",
+
+		// [JAVA] Java 언어 지원 + 포매터
+		"redhat.java",
+
+		// [DART] Dart 언어 지원 + 포매터
+		"dart-code.dart-code",
+
+		// [XML] XML 포매터 + 문법 검증
+		"redhat.vscode-xml",
+
+		// [CSV] 컬럼별 색상 구분 + 쿼리
+		"mechatroner.rainbow-csv",
+		// [CSV] 스프레드시트 UI로 편집
+		"janisdd.vscode-edit-csv"
+	]
+}
