@@ -126,8 +126,8 @@
 	"prettier.tabWidth": 4,
 	// [WEB] prettier 줄바꿈 기준 너비
 	"prettier.printWidth": 250,
-	// [WEB] 라이브서버 포트
-	"liveServer.settings.port": 5502,
+	// [WEB] 여는/닫는 태그 이름 동시 수정
+	"editor.linkedEditing": true,
 	// [WEB] HTML — prettier
 	"[html]": {
 		"editor.formatOnSave": true,

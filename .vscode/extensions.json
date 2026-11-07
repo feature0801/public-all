@@ -5,13 +5,7 @@
 		// [공통] 아이콘테마
 		"pkief.material-icon-theme",
 
-		// [WEB] 라이브서버
-		"ritwickdey.liveserver",
-		// [WEB] auto-close-tag
-		"formulahendry.auto-close-tag",
-		// [WEB] auto-rename-tag
-		"formulahendry.auto-rename-tag",
-		// [WEB] color-highlight
+		// [WEB] color-highlight (내장 색상 표시는 CSS 계열 전용 → JS·HTML 등 모든 파일에서 색상 표시용)
 		"naumovs.color-highlight",
 
 		// [PY] Python
