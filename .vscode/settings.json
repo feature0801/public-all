@@ -200,12 +200,11 @@
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
 
-	// [PY] Python — autopep8
+	// [PY] Python — ruff (린트 + 서식, 입력중 서식은 미지원)
 	"[python]": {
 		"editor.formatOnSave": true,
-		"editor.formatOnType": true,
 		"editor.formatOnPaste": true,
-		"editor.defaultFormatter": "ms-python.autopep8"
+		"editor.defaultFormatter": "charliermarsh.ruff"
 	},
 
 	// [JAVA] Java — redhat.java

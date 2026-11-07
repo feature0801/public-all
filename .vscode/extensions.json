@@ -7,20 +7,30 @@
 
 		// [WEB] color-highlight (내장 색상 표시는 CSS 계열 전용 → JS·HTML 등 모든 파일에서 색상 표시용)
 		"naumovs.color-highlight",
+		// [WEB] Vue 언어 지원 (없으면 .vue 파일 인식 안 됨 — settings.json의 [vue] 블록이 이걸 요구)
+		"vue.volar",
 
 		// [PY] Python
 		"ms-python.python",
-		// [PY] autopep8 포매터 (python 확장에서 분리된 별도 확장 — settings.json의 [python] defaultFormatter가 이걸 요구)
-		"ms-python.autopep8",
+		// [PY] ruff 린터 + 포매터 (settings.json의 [python] defaultFormatter가 이걸 요구)
+		"charliermarsh.ruff",
 
 		// [JAVA] Java 언어 지원 + 포매터
 		"redhat.java",
 
 		// [DART] Dart 언어 지원 + 포매터
 		"dart-code.dart-code",
+		// [DART] Flutter 지원 (위젯 인스펙터·핫리로드·디바이스 선택)
+		"dart-code.flutter",
 
 		// [XML] XML 포매터 + 문법 검증
 		"redhat.vscode-xml",
+
+		// [YAML] 스키마 기반 검증 + 자동완성 (docker-compose·GitHub Actions 등, 서식은 prettier 유지)
+		"redhat.vscode-yaml",
+
+		// [MD] 마크다운 문법 검사
+		"davidanson.vscode-markdownlint",
 
 		// [CSV] 컬럼별 색상 구분 + 쿼리
 		"mechatroner.rainbow-csv",
