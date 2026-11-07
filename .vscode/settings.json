@@ -41,6 +41,26 @@
 	"github.copilot.enable": {
 		"*": false
 	},
+	// [공통] 내장 AI 기능(Chat·인라인 제안·Copilot 확장) 전체 끄고 관련 UI 숨김
+	"chat.disableAIFeatures": true,
+	// [공통] 타이틀바 Copilot 로그인(Sign In) 버튼 숨김
+	"chat.titleBar.signIn.enabled": false,
+	// [공통] 웰컴 페이지 GitHub 로그인 버튼 숨김
+	"chat.welcomePage.signIn.enabled": false,
+	// [공통] 타이틀바 'Agents 창에서 열기' 버튼 숨김
+	"chat.titleBar.openInAgentsWindow.enabled": false,
+	// [공통] 타이틀바 Chat 메뉴 숨김
+	"chat.commandCenter.enabled": false,
+	// [공통] 타이틀바 커맨드센터 'Agent Status' 표시 숨김
+	"chat.agentsControl.enabled": "hidden",
+	// [공통] 빈 Chat 화면의 에이전트 세션 목록 숨김
+	"chat.viewSessions.enabled": false,
+	// [공통] 커맨드 팔레트 하단 'Ask in Chat' 항목 숨김
+	"workbench.commandPalette.showAskInChat": false,
+	// [공통] 설정 편집기 검색창 AI 검색 토글 숨김
+	"workbench.settings.showAISearchToggle": false,
+	// [공통] 타이틀바 레이아웃 컨트롤(사이드바·패널 토글 버튼) 숨김
+	"workbench.layoutControl.enabled": false,
 	// [공통] 검색 제외
 	"search.exclude": {
 		"node_modules": true,
