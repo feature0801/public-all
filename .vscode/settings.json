@@ -13,7 +13,7 @@
 	"editor.minimap.enabled": false,
 	// [공통] 세로 가이드선 없음
 	"editor.rulers": [],
-	// [공통] 스크롤시 현재 위치(함수·제목)를 상단에 고정
+	// [공통] 스크롤시 현재 위치(함수·제목) 상단 고정
 	"editor.stickyScroll.enabled": false,
 	// [공통] 브레드크럼(상단 경로 표시줄) 끔
 	"breadcrumbs.enabled": false,
@@ -37,10 +37,6 @@
 	"explorer.compactFolders": false,
 	// [공통] 편집 모드로 파일 오픈
 	"workbench.editor.enablePreview": false,
-	// [공통] copilot 끔
-	"github.copilot.enable": {
-		"*": false
-	},
 	// [공통] 내장 AI 기능(Chat·인라인 제안·Copilot 확장) 전체 끄고 관련 UI 숨김
 	"chat.disableAIFeatures": true,
 	// [공통] 타이틀바 Copilot 로그인(Sign In) 버튼 숨김
@@ -49,8 +45,6 @@
 	"chat.welcomePage.signIn.enabled": false,
 	// [공통] 타이틀바 'Agents 창에서 열기' 버튼 숨김
 	"chat.titleBar.openInAgentsWindow.enabled": false,
-	// [공통] 타이틀바 Chat 메뉴 숨김
-	"chat.commandCenter.enabled": false,
 	// [공통] 타이틀바 커맨드센터 'Agent Status' 표시 숨김
 	"chat.agentsControl.enabled": "hidden",
 	// [공통] 빈 Chat 화면의 에이전트 세션 목록 숨김
@@ -63,7 +57,7 @@
 	"workbench.layoutControl.enabled": false,
 	// [공통] 검색 제외
 	"search.exclude": {
-		"node_modules": true,
+		"**/node_modules": true,
 		"**/package-lock.json": true
 	},
 	// [공통] 탐색기 숨김 (false = 사용자 설정에서 숨겨도 강제 표시)
@@ -94,11 +88,11 @@
 
 	// [MD] 마크다운 전용 에디터 동작
 	"[markdown]": {
-		// 저장시 자동 서식 끔 (문서는 수동 정렬)
+		// 저장시 자동 서식
 		"editor.formatOnSave": true,
-		// 입력중 자동 서식 끔
+		// 입력중 자동 서식
 		"editor.formatOnType": true,
-		// 붙여넣기시 자동 서식 끔
+		// 붙여넣기시 자동 서식
 		"editor.formatOnPaste": true,
 		// 화면 너비에 맞춰 줄바꿈
 		"editor.wordWrap": "on",
@@ -215,7 +209,7 @@
 	},
 
 	// [JAVA] Java — redhat.java
-	"[JAVA]": {
+	"[java]": {
 		"editor.formatOnSave": true,
 		"editor.formatOnType": true,
 		"editor.formatOnPaste": true,
@@ -227,6 +221,6 @@
 		"editor.formatOnSave": true,
 		"editor.formatOnType": true,
 		"editor.formatOnPaste": true,
-		"editor.defaultFormatter": "dart-code.dart-code"
+		"editor.defaultFormatter": "Dart-Code.dart-code"
 	}
 }
