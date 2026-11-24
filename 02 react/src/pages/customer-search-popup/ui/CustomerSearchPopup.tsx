@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
-import { CUSTOMER_SEARCH_MSG, customerApi, type Customer, type CustomerSearchPopupData } from '@/domains/customer'
+import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { CUSTOMER_SEARCH_MSG, customerQueries, type Customer, type CustomerSearchPopupData } from '@/domains/customer'
 import { formatBizNo } from '@/shared/lib/format'
-import { closeSelf, usePopupData } from '@/shared/lib/popup'
+import { closeSelf, isOpenedAsPopup, usePopupData } from '@/shared/lib/popup'
 
 /** 거래처 검색 팝업 — 행 더블클릭 또는 선택 버튼으로 부모에 전달 */
 export function CustomerSearchPopup() {
@@ -9,29 +10,23 @@ export function CustomerSearchPopup() {
   // 사용자가 입력하기 전(null)에는 부모가 넘긴 검색어 사용
   const [keywordInput, setKeyword] = useState<string | null>(null)
   const keyword = keywordInput ?? data?.keyword ?? ''
-  const [rows, setRows] = useState<Customer[]>([])
-  const [loading, setLoading] = useState(false)
+  // 실제로 조회한 검색어 (검색 버튼을 누르기 전에는 부모가 넘긴 검색어)
+  const [searched, setSearched] = useState<string | null>(null)
+  const searchKeyword = searched ?? data?.keyword ?? ''
 
-  const search = async (k: string) => {
-    setLoading(true)
-    try {
-      setRows(await customerApi.search(k))
-    } finally {
-      setLoading(false)
-    }
+  const query = useQuery({
+    ...customerQueries.search(searchKeyword),
+    // 부모 데이터를 받은 뒤 초기 검색 (부모 없이 열리면 바로 검색)
+    enabled: received || !isOpenedAsPopup(),
+  })
+  const rows = query.data ?? []
+  const loading = query.isFetching
+
+  const search = () => {
+    // 같은 검색어로 다시 누르면 새로 조회
+    if (keyword === searchKeyword) void query.refetch()
+    else setSearched(keyword)
   }
-
-  // 부모 데이터 수신 후 초기 검색 (부모 없이 열려도 1회 검색)
-  useEffect(() => {
-    if (!received && window.opener) return
-    let cancelled = false
-    customerApi.search(data?.keyword ?? '').then((r) => {
-      if (!cancelled) setRows(r)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [received, data?.keyword])
 
   const select = (c: Customer) => closeSelf(CUSTOMER_SEARCH_MSG.SELECT, c)
 
@@ -42,7 +37,7 @@ export function CustomerSearchPopup() {
         className="form-row"
         onSubmit={(e) => {
           e.preventDefault()
-          void search(keyword)
+          search()
         }}
       >
         <input

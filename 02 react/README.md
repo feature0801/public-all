@@ -32,31 +32,50 @@ src/
 └── styles/global.css
 ```
 
-## 상태관리 (zustand)
+## 상태관리 (zustand + TanStack Query)
 
-### 구조 / 규칙
+### 역할 분담
+| 구분 | 담당 | 예 | 위치 |
+| --- | --- | --- | --- |
+| 앱 전체가 공유하는 기준 데이터 / 클라이언트 상태 | **zustand** | 공통코드 | `domains/{d}/model/{d}Store.ts` |
+| 검색조건으로 조회하는 목록 등 조회 결과 | **TanStack Query** | 주문 그리드 조회, 거래처 검색 팝업 | `domains/{d}/model/{d}Queries.ts` |
+
 ```
 src/
-├── api/commonCodeApi.ts              # API 함수. USE_MOCK 이면 mocks 로 분기
-├── mocks/                            # 더미 API (지연, 실패 시뮬레이션, 호출 로그)
-│   ├── mockUtils.ts
-│   ├── commonCodeMock.ts
-│   └── data/commonCodes.ts
-├── stores/
-│   └── commonCode/
-│       ├── commonCodeStore.ts        # 스토어 + React 밖 헬퍼(getCodeName ...)
-│       └── useCommonCodes.ts         # 컴포넌트용 훅
-└── shared/
-    ├── api/http.ts                   # fetch 래퍼, ApiError
-    ├── components/CodeSelect.tsx, CodeLabel.tsx
-    └── constants/codeGroups.ts       # CODE_GROUP 상수
+├── app/providers/AppProviders.tsx         # QueryClientProvider + ReactQueryDevtools(개발 모드만)
+├── shared/api/
+│   ├── http.ts                            # fetch 래퍼, ApiError
+│   └── queryClient.ts                     # QueryClient 기본 옵션
+├── domains/
+│   ├── common-code/
+│   │   ├── api/commonCodeApi.ts           # API 함수. USE_MOCK 이면 mocks 로 분기
+│   │   ├── model/commonCodeStore.ts       # zustand 스토어 + React 밖 헬퍼(getCodeName ...)
+│   │   ├── model/useCommonCodes.ts        # 컴포넌트용 훅
+│   │   └── ui/CodeSelect.tsx, CodeLabel.tsx
+│   ├── order/model/orderQueries.ts        # orderKeys, orderQueries (queryOptions)
+│   └── customer/model/customerQueries.ts
+├── shared/ui/search-form/useGridSearch.ts # 그리드 조회 훅 (TanStack Query 기반)
+└── mocks/                                 # 더미 API (지연, 실패 시뮬레이션, 호출 로그)
 ```
 
-- 스토어는 **도메인별 폴더**(`stores/<domain>/`)로 나누고, 하나의 `create()` 에 state 와 actions 를 같이 둔다.
+**zustand**
+- 스토어는 도메인 `model/` 에 두고, 하나의 `create()` 에 state 와 actions 를 같이 둔다.
 - 컴포넌트는 **selector 로 필요한 값만 구독**한다. 여러 값을 꺼낼 때는 `useShallow`.
-- API 호출은 스토어 action 또는 `api/` 함수에서만 하고, 컴포넌트에서 `http` 를 직접 부르지 않는다.
 - React 밖(유틸, 그리드 formatter)에서는 `useXxxStore.getState()` 기반 헬퍼를 사용한다.
 - 미들웨어: `devtools`(개발 모드에서만, Redux DevTools 확장), 필요하면 `persist`.
+
+**TanStack Query**
+- 쿼리 키와 조회 함수는 도메인의 `{d}Queries.ts` 에 `queryOptions` 로 정의하고, 화면은 그걸 가져다 쓴다. 키를 화면에서 직접 만들지 않는다.
+  ```ts
+  export const orderKeys = { all: ['order'] as const, search: (p) => [...orderKeys.all, 'search', p] as const }
+  export const orderQueries = { search: (p) => queryOptions({ queryKey: orderKeys.search(p), queryFn: () => orderApi.search(p) }) }
+  ```
+- 그리드 조회는 `useGridSearch(orderQueries.search)`. 조회 버튼은 항상 새로 조회, 페이지 왕복은 30초 캐시를 사용한다.
+- 저장/삭제 후 목록 갱신: `queryClient.invalidateQueries({ queryKey: orderKeys.all })`
+- 기본 옵션(`shared/api/queryClient.ts`): `staleTime` 30초, **창 focus 시 재조회 끔**(팝업을 열고 닫을 때마다 재조회되는 것 방지), 4xx 는 재시도 안 함 / 5xx·네트워크 오류만 1회 재시도.
+
+**공통**
+- API 호출은 `api/{d}Api.ts` 에서만 하고, 컴포넌트에서 `http` 를 직접 부르지 않는다.
 - 실제 API 가 준비되면 `.env.*` 의 `VITE_USE_MOCK=false` 로 바꾼다.
 
 ### 공통코드 스토어
@@ -93,17 +112,17 @@ react-hook-form + zod + AG Grid. ERP 처럼 검색 필드가 많고 예외 규�
   ① 검증      orderSearchSchema (zod)          실패 → 첫 오류 필드 focus + alert, 필드 아래 메시지
   ② 변환      toOrderSearchParams(values)      화면 값 → API 파라미터 (이름/형식/조건부 제외)
   ③ 조회 전   beforeSearch(values, params)     false 반환 시 취소 (confirm 등)
-  ④ 조회      grid.search(params)              + page/size/sort → orderApi.search
+  ④ 조회      grid.search(params)              + page/size/sort → orderQueries.search (TanStack Query)
   ⑤ 서버 오류 ApiError.data.fieldErrors        serverFieldMap 으로 해당 필드에 오류 표시
 ```
 
-### 화면 하나의 파일 구성 (`pages/order/`)
+### 화면 하나의 파일 구성 (`pages/order-list/`)
 | 파일 | 역할 | 예외가 생기면 |
 | --- | --- | --- |
-| `orderSearchSchema.ts` | 폼 값 타입, 기본값, 검증 규칙 | `superRefine` 에 규칙 추가 (path 로 표시 위치 지정) |
-| `orderSearchParams.ts` | 화면 값 → API 파라미터, 서버 필드명 매핑 | 해당 필드 변환 한 줄 수정 |
-| `orderColumns.ts` | 그리드 컬럼 (`col.date()`, `col.code()` ...) | 컬럼 추가/수정 |
-| `OrderListPage.tsx` | 검색 영역 배치 + 그리드 | 커스텀 필드는 `SearchItem` 안에 직접 JSX |
+| `model/orderSearchSchema.ts` | 폼 값 타입, 기본값, 검증 규칙 | `superRefine` 에 규칙 추가 (path 로 표시 위치 지정) |
+| `model/orderSearchParams.ts` | 화면 값 → API 파라미터, 서버 필드명 매핑 | 해당 필드 변환 한 줄 수정 |
+| `model/orderColumns.ts` | 그리드 컬럼 (`col.date()`, `col.code()` ...) | 컬럼 추가/수정 |
+| `ui/OrderListPage.tsx` | 검색 영역 배치 + 그리드 | 커스텀 필드는 `SearchItem` 안에 직접 JSX |
 
 ### 원칙
 - **검증과 변환을 분리**: 스키마는 화면 값(`'2026-11-01'`, `'123-45-67890'`, `{code,name}`)만 검증하고, API 형식(`'20261101'`, `'1234567890'`, `custCd`)은 `toParams` 에서 만든다.
@@ -111,13 +130,13 @@ react-hook-form + zod + AG Grid. ERP 처럼 검색 필드가 많고 예외 규�
 - **페이지 이동/정렬은 마지막 조회 조건으로**: 조건을 바꾸고 조회를 누르지 않은 상태에서 페이지를 넘겨도 이전 조건 유지.
 - **서버 페이징/정렬**: 그리드 정렬 클릭 → `sort=field,asc` 로 재조회 (`AppGrid serverSort`).
 
-### 공통 모듈 (`shared/search`, `shared/grid`)
+### 공통 모듈 (`shared/ui/search-form`, `shared/ui/data-grid`, `shared/ui/pagination`)
 | 분류 | 항목 |
 | --- | --- |
 | 필드 | `TextField`(대문자 변환), `MaskedField`(사업자번호 등), `NumberRangeField`(콤마), `DateRangeField`(기간 버튼), `SelectField` / `RadioField` / `CheckboxGroupField`(공통코드 또는 고정 옵션), `CheckboxField`, `LookupField`(코드+명, 팝업 연동) |
 | 검증 | `zText`, `zDate`, `zNumber`, `zBizNo`, `zLookup`, `refineDateRange`(필수/순서/최대기간), `refineNumberRange`, `refineRequiredIf`, 메시지 `MSG` |
 | 변환 | `toYmd`, `toText`, `toDigits`, `toCsv`, `toYn`, `toStartOfDay`/`toEndOfDay`, `cleanParams` |
-| 훅 | `useSearchForm`(검증→변환→조회 흐름), `useGridSearch`(페이징/정렬/race 방지) |
+| 훅 | `useSearchForm`(검증→변환→조회 흐름), `useGridSearch`(TanStack Query 기반 페이징/정렬/캐시) |
 | 그리드 | `AppGrid`(테마, 한글, 서버 정렬, 공통코드 갱신 시 셀 다시 그림), `col.*` 컬럼 타입, `Pagination` |
 
 ### 샘플에 들어있는 예외 규칙

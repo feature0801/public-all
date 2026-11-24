@@ -57,7 +57,7 @@ export function CommonCodeDemoPage() {
     <section>
       <h1>공통코드 (zustand)</h1>
       <p className="desc">
-        <code>src/stores/commonCode</code> 사용 예제. API 는 <code>src/mocks</code> 의 더미 API(지연 {mockConfig.delay}ms)를
+        <code>src/domains/common-code</code> (zustand 스토어) 사용 예제. API 는 <code>src/mocks</code> 의 더미 API(지연 {mockConfig.delay}ms)를
         사용합니다.
       </p>
 

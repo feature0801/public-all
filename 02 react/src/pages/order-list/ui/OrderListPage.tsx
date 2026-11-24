@@ -1,6 +1,6 @@
 import { useWatch, type Control } from 'react-hook-form'
 import dayjs from 'dayjs'
-import { orderApi, type Order, type OrderSearchParams } from '@/domains/order'
+import { orderQueries, type Order } from '@/domains/order'
 import { CODE_GROUP, usePrefetchCommonCodes } from '@/domains/common-code'
 import {
   CUSTOMER_SEARCH_MSG,
@@ -65,7 +65,7 @@ function confirmLongRange(values: OrderSearchValues): boolean {
 export function OrderListPage() {
   usePrefetchCommonCodes([CODE_GROUP.ORDER_STATUS, CODE_GROUP.DEPT, CODE_GROUP.PAY_METHOD])
 
-  const grid = useGridSearch<OrderSearchParams, Order>(orderApi.search, { pageSize: 20 })
+  const grid = useGridSearch(orderQueries.search, { pageSize: 20 })
 
   const { form, submit, reset, searching } = useSearchForm({
     schema: orderSearchSchema,
