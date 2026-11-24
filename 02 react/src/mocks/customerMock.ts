@@ -1,4 +1,4 @@
-import type { Customer } from '@/api/customerApi'
+import type { Customer } from '@/domains/customer'
 import { CUSTOMERS } from './data/customers'
 import { mockResponse } from './mockUtils'
 

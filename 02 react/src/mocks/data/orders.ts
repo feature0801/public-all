@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import type { Order } from '@/api/orderApi'
+import type { Order } from '@/domains/order'
 import { CUSTOMERS } from './customers'
 
 /** 시드 고정 난수 (새로고침해도 같은 데이터) */

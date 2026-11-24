@@ -1,9 +1,9 @@
 /**
  * GET /orders 더미 구현 — 실제 서버처럼 필터 / 정렬 / 페이징 / 서버 검증을 수행
  */
-import type { Order, OrderSearchParams } from '@/api/orderApi'
-import { ApiError } from '@/shared/api/http'
-import type { PageRequest, PageResult } from '@/shared/search'
+import type { Order, OrderSearchParams } from '@/domains/order'
+import { ApiError } from '@/shared/api'
+import type { PageRequest, PageResult } from '@/shared/ui/search-form'
 import { CUSTOMERS } from './data/customers'
 import { ORDERS } from './data/orders'
 import { mockResponse } from './mockUtils'

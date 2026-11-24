@@ -1,4 +1,4 @@
-import type { CommonCode } from '@/shared/types/commonCode'
+import type { CommonCode } from '@/domains/common-code'
 
 const code = (groupCode: string, code: string, name: string, sortOrder: number, useYn: 'Y' | 'N' = 'Y'): CommonCode => ({
   groupCode,

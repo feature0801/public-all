@@ -1,4 +1,4 @@
-import type { Customer } from '@/api/customerApi'
+import type { Customer } from '@/domains/customer'
 
 /** 앞 9자리로 체크섬이 맞는 사업자번호 생성 */
 function bizNo(first9: string): string {

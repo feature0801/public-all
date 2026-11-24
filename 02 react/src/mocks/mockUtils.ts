@@ -5,7 +5,7 @@
  * - 호출 로그 구독 (샘플 화면에서 "실제로 API 가 몇 번 호출됐는지" 확인용)
  * - 다음 요청 실패시키기 (에러 처리 테스트용)
  */
-import { ApiError } from '@/shared/api/http'
+import { ApiError } from '@/shared/api'
 
 export interface MockApiLog {
   id: number

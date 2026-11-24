@@ -1,4 +1,4 @@
-import type { CommonCodeMap } from '@/shared/types/commonCode'
+import type { CommonCodeMap } from '@/domains/common-code'
 import { COMMON_CODE_TABLE } from './data/commonCodes'
 import { mockResponse } from './mockUtils'
 
