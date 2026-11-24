@@ -98,6 +98,24 @@ export class PopupBlockedError extends Error {
   }
 }
 
+/**
+ * 팝업에 보낼 수 없는 데이터일 때 throw 되는 에러.
+ * postMessage 는 structured clone 으로 복사하므로 함수, DOM, Proxy, 함수를 가진 객체
+ * (예: AG Grid RowNode, 그리드 api, react-hook-form 의 control 등)는 보낼 수 없다.
+ * 이전에는 부모 콘솔에만 에러가 찍히고 팝업은 data 를 영원히 기다렸다.
+ */
+export class PopupDataError extends Error {
+  constructor(cause: unknown) {
+    const detail = cause instanceof Error ? cause.message : String(cause)
+    super(
+      `팝업에 전달할 수 없는 데이터가 포함되어 있습니다. 순수 데이터(객체/배열/문자열/숫자/Date 등)만 넘겨주세요. ` +
+        `그리드라면 getSelectedNodes() 대신 getSelectedRows() 를 사용하세요. (${detail})`,
+      { cause },
+    )
+    this.name = 'PopupDataError'
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* 공통                                                                */
 /* ------------------------------------------------------------------ */
@@ -111,8 +129,27 @@ export function isPopupMessage<T = unknown>(event: MessageEvent): event is Messa
 
 function post(target: Window, message: Omit<PopupMessage, 'source'>): boolean {
   if (target.closed) return false
-  target.postMessage({ source: POPUP_MESSAGE_SOURCE, ...message }, window.location.origin)
+  try {
+    target.postMessage({ source: POPUP_MESSAGE_SOURCE, ...message }, window.location.origin)
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'DataCloneError') throw new PopupDataError(e)
+    throw e
+  }
   return true
+}
+
+/**
+ * 팝업에 보낼 data 를 미리 복사해 둔다 (postMessage 와 같은 structured clone).
+ * - 보낼 수 없는 값이면 팝업을 열기 "전에" PopupDataError 를 던져 호출한 쪽에서 바로 알 수 있게 한다.
+ * - 연 시점의 스냅샷이 되므로, 이후 부모가 원본 배열/객체를 수정해도 팝업 data 는 바뀌지 않는다
+ *   (바꾸려면 updatePopupData 사용).
+ */
+function snapshot<T>(data: T): T {
+  try {
+    return structuredClone(data)
+  } catch (e) {
+    throw new PopupDataError(e)
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -223,18 +260,19 @@ function createSession(name: string, win: Window, options: PopupOptions): void {
       return
     }
 
+    const respondError = (err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err)
+      if (requestId) post(win, { type: POPUP_INTERNAL_TYPE.RESPONSE, requestId, error: message })
+      else console.error(`[popup:${name}] handler '${type}' 실행 중 오류`, err)
+    }
+
     Promise.resolve()
       .then(() => handler(payload as never))
-      .then(
-        (result) => {
-          if (requestId) post(win, { type: POPUP_INTERNAL_TYPE.RESPONSE, requestId, payload: result })
-        },
-        (err: unknown) => {
-          const message = err instanceof Error ? err.message : String(err)
-          if (requestId) post(win, { type: POPUP_INTERNAL_TYPE.RESPONSE, requestId, error: message })
-          else console.error(`[popup:${name}] handler '${type}' 실행 중 오류`, err)
-        },
-      )
+      .then((result) => {
+        // handler 반환값이 보낼 수 없는 값이면 (PopupDataError) 아래 catch 에서 에러로 응답
+        if (requestId) post(win, { type: POPUP_INTERNAL_TYPE.RESPONSE, requestId, payload: result })
+      })
+      .catch(respondError)
   }
 
   // 팝업 close 는 이벤트가 없으므로 polling 으로 감지
@@ -264,6 +302,7 @@ export function isPopupOpen(name: string): boolean {
 /**
  * 팝업을 연다.
  * @throws PopupBlockedError 팝업이 차단된 경우
+ * @throws PopupDataError    data 에 보낼 수 없는 값(함수, RowNode 등)이 있는 경우 — 창을 열기 전에 검사
  *
  * @example
  * openPopup('/popup/user-search', 'userSearch', {
@@ -273,6 +312,8 @@ export function isPopupOpen(name: string): boolean {
  * })
  */
 export function openPopup(url: string, name: string, options: PopupOptions = {}): Window {
+  // 창을 열기 전에 data 검사 + 스냅샷 (보낼 수 없는 값이면 여기서 PopupDataError)
+  if ('data' in options) options = { ...options, data: snapshot(options.data) }
   const existing = sessions.get(name)
 
   if (options.focusIfOpened && existing && !existing.win.closed) {
@@ -347,11 +388,14 @@ export function openPopupForResult<T>(
   })
 }
 
-/** 열려 있는 팝업의 data 를 갱신한다. 팝업의 usePopupData 값이 바뀐다. */
+/**
+ * 열려 있는 팝업의 data 를 갱신한다. 팝업의 usePopupData 값이 바뀐다.
+ * @throws PopupDataError 보낼 수 없는 값이 있는 경우
+ */
 export function updatePopupData(name: string, data: unknown): boolean {
   const session = sessions.get(name)
   if (!session) return false
-  session.data = data
+  session.data = snapshot(data)
   return post(session.win, { type: POPUP_INTERNAL_TYPE.INIT, payload: data })
 }
 

@@ -3,6 +3,7 @@ export {
   POPUP_MESSAGE_SOURCE,
   POPUP_INTERNAL_TYPE,
   PopupBlockedError,
+  PopupDataError,
   isPopupMessage,
   isPopupOpen,
   openPopup,
