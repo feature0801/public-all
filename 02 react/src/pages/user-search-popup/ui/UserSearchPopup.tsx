@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { USER_SEARCH_MSG, type AddUserResult, type User, type UserSearchPopupData } from '@/domains/user'
-import { closeSelf, isOpenedAsPopup, requestOpener, usePopupData, usePopupMessage } from '@/shared/lib/popup'
+import { USER_SEARCH_MSG, type User, type UserSearchPopupData } from '@/domains/user'
+import { closeSelf, isOpenedAsPopup, sendToOpener, usePopupData } from '@/shared/lib/popup'
 
 const MOCK_USERS: User[] = [
   { id: 1, name: '김철수', dept: '개발팀' },
@@ -15,39 +15,27 @@ const MOCK_USERS: User[] = [
  * 사용자 검색 팝업
  * - 부모가 넘긴 data(검색어, 선택된 id, 모드)로 초기화
  * - 단일 모드 : 선택 → closeSelf(SELECT) 로 결과 전달 후 닫힘
- * - 다중 모드 : requestOpener(ADD) 로 부모 콜백 호출 → 반환값(성공/실패)을 화면에 표시
+ * - 다중 모드 : sendToOpener(ADD) 로 부모 콜백 호출. 부모가 update 로 보내주는 selectedIds 로
+ *               이미 추가된 사용자 / 최대 인원 도달 시 버튼을 비활성화한다
  */
 export function UserSearchPopup() {
   const { data, received } = usePopupData<UserSearchPopupData>()
   // 사용자가 입력하기 전(null)에는 부모가 넘긴 검색어를 사용
   const [keywordInput, setKeyword] = useState<string | null>(null)
   const keyword = keywordInput ?? data?.keyword ?? ''
-  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null)
-  const [notice, setNotice] = useState<string>()
 
   const isMulti = !!data?.multi
   const selectedIds = data?.selectedIds ?? []
-
-  // 부모 → 팝업 알림
-  usePopupMessage<string>(USER_SEARCH_MSG.NOTICE, (text) => setNotice(text))
+  const isFull = isMulti && data?.max != null && selectedIds.length >= data.max
 
   const users = useMemo(
     () => MOCK_USERS.filter((u) => u.name.includes(keyword) || u.dept.includes(keyword)),
     [keyword],
   )
 
-  const handleSelect = async (user: User) => {
-    if (!isMulti) {
-      closeSelf(USER_SEARCH_MSG.SELECT, user)
-      return
-    }
-    try {
-      // 부모의 handlers['add-user'] 를 호출하고 반환값을 받는다
-      const res = await requestOpener<AddUserResult, User>(USER_SEARCH_MSG.ADD, user)
-      setStatus({ ok: res.ok, text: res.message ?? (res.ok ? `${user.name} 추가됨` : '추가 실패') })
-    } catch (e) {
-      setStatus({ ok: false, text: e instanceof Error ? e.message : String(e) })
-    }
+  const handleSelect = (user: User) => {
+    if (isMulti) sendToOpener(USER_SEARCH_MSG.ADD, user) // 부모의 handlers['add-user'] 실행
+    else closeSelf(USER_SEARCH_MSG.SELECT, user)
   }
 
   return (
@@ -57,7 +45,6 @@ export function UserSearchPopup() {
       {!isOpenedAsPopup() && (
         <p className="warn">부모 창 없이 직접 열린 페이지입니다. 데이터 수신/선택 결과 전달이 되지 않습니다.</p>
       )}
-      {notice && <p className="notice">📢 부모 알림: {notice}</p>}
 
       <details className="received">
         <summary>부모로부터 받은 data {received ? '' : '(대기 중)'}</summary>
@@ -88,8 +75,12 @@ export function UserSearchPopup() {
                 <td>{u.name}</td>
                 <td>{u.dept}</td>
                 <td>
-                  <button className="small" onClick={() => handleSelect(u)}>
-                    {isMulti ? '추가' : isSelected ? '선택됨' : '선택'}
+                  <button
+                    className="small"
+                    onClick={() => handleSelect(u)}
+                    disabled={isMulti && (isSelected || isFull)}
+                  >
+                    {isMulti ? (isSelected ? '추가됨' : '추가') : isSelected ? '선택됨' : '선택'}
                   </button>
                 </td>
               </tr>
@@ -105,7 +96,7 @@ export function UserSearchPopup() {
         </tbody>
       </table>
 
-      {status && <p className={status.ok ? 'status ok' : 'status fail'}>{status.text}</p>}
+      {isFull && <p className="status fail">최대 {data?.max}명까지 추가할 수 있습니다.</p>}
 
       <div className="popup-footer">
         <button className="secondary" onClick={() => closeSelf()}>

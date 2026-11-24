@@ -10,10 +10,8 @@ export const USER_SEARCH_POPUP_URL = '/popup/user-search'
 export const USER_SEARCH_MSG = {
   /** 단일 선택 결과 (팝업 → 부모, 팝업 닫힘) */
   SELECT: 'select-user',
-  /** 다중 모드 추가 요청 (팝업 → 부모 handler, 결과 반환) */
+  /** 다중 모드 추가 요청 (팝업 → 부모 handler) */
   ADD: 'add-user',
-  /** 부모 → 팝업 알림 */
-  NOTICE: 'notice',
 } as const
 
 /** 부모 → 팝업 으로 넘기는 데이터 */
@@ -24,10 +22,6 @@ export interface UserSearchPopupData {
   selectedIds?: number[]
   /** true 면 여러 명 추가 모드 */
   multi?: boolean
-}
-
-/** ADD handler 의 반환값 */
-export interface AddUserResult {
-  ok: boolean
-  message?: string
+  /** 다중 모드 최대 인원 (도달하면 팝업에서 추가 버튼 비활성화) */
+  max?: number
 }

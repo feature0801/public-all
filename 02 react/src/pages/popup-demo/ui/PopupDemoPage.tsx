@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import {
   USER_SEARCH_MSG,
   USER_SEARCH_POPUP_URL,
-  type AddUserResult,
   type User,
   type UserSearchPopupData,
 } from '@/domains/user'
@@ -21,7 +20,6 @@ export function PopupDemoPage() {
   const [keyword, setKeyword] = useState('')
   const [selected, setSelected] = useState<User | null>(null)
   const [multi, setMulti] = useState<User[]>([])
-  const [notice, setNotice] = useState('저장 전에 확인해주세요')
   const [positionIdx, setPositionIdx] = useState(0)
   const [log, setLog] = useState<string[]>([])
 
@@ -52,20 +50,14 @@ export function PopupDemoPage() {
     }
   }
 
-  /* 2) 콜백 전달 + 반환값 ---------------------------------------------- */
-  // 팝업이 requestOpener('add-user', user) 로 호출하면 실행되고, 반환값이 팝업으로 돌아간다.
+  /* 2) 팝업 → 부모 콜백 + 부모 → 팝업 data 갱신 ------------------------- */
+  // 팝업이 sendToOpener('add-user', user) 로 호출하면 실행된다.
   // usePopup 이 handlers 를 ref 로 관리하므로 여기서 multi state 를 그대로 읽어도 항상 최신값이다.
-  const handleAddUser = (user: User): AddUserResult => {
-    if (multi.some((u) => u.id === user.id)) {
-      return { ok: false, message: `${user.name}은(는) 이미 추가되었습니다.` }
-    }
-    if (multi.length >= MAX_MULTI) {
-      return { ok: false, message: `최대 ${MAX_MULTI}명까지 추가할 수 있습니다.` }
-    }
-    const next = [...multi, user]
-    setMulti(next)
+  const handleAddUser = (user: User) => {
+    // 팝업에서도 막지만, 부모가 최종 검증
+    if (multi.some((u) => u.id === user.id) || multi.length >= MAX_MULTI) return
+    setMulti([...multi, user])
     addLog(`handler 'add-user' 호출됨: ${user.name}`)
-    return { ok: true, message: `${user.name} 추가됨 (${next.length}/${MAX_MULTI})` }
   }
 
   const multiPopup = usePopup({
@@ -73,7 +65,6 @@ export function PopupDemoPage() {
     name: 'userSearchMulti',
     width: 480,
     height: 640,
-    focusIfOpened: true,
     handlers: { [USER_SEARCH_MSG.ADD]: handleAddUser },
     onClose: () => addLog('다중 선택 팝업 닫힘 (onClose)'),
   })
@@ -84,7 +75,12 @@ export function PopupDemoPage() {
   const handleOpenMulti = () => {
     multiKeywordRef.current = keyword
     try {
-      multiPopup.open({ multi: true, keyword, selectedIds: multi.map((u) => u.id) } satisfies UserSearchPopupData)
+      multiPopup.open({
+        multi: true,
+        max: MAX_MULTI,
+        keyword,
+        selectedIds: multi.map((u) => u.id),
+      } satisfies UserSearchPopupData)
       addLog('다중 선택 팝업 오픈')
     } catch (e) {
       handleError(e)
@@ -96,6 +92,7 @@ export function PopupDemoPage() {
   useEffect(() => {
     updateMulti({
       multi: true,
+      max: MAX_MULTI,
       keyword: multiKeywordRef.current,
       selectedIds: multi.map((u) => u.id),
     } satisfies UserSearchPopupData)
@@ -103,27 +100,26 @@ export function PopupDemoPage() {
 
   const handleRemove = (id: number) => setMulti((prev) => prev.filter((u) => u.id !== id))
 
-  /* 3) 부모 → 팝업 메시지 ---------------------------------------------- */
-  const handleSendNotice = () => {
-    const ok = multiPopup.send(USER_SEARCH_MSG.NOTICE, notice)
-    addLog(ok ? `팝업에 알림 전송: ${notice}` : '열린 다중 선택 팝업이 없습니다')
-  }
-
-  /* 4) 위치 지정 ------------------------------------------------------- */
-  const positionPopup = usePopup({ url: USER_SEARCH_POPUP_URL, name: 'positionDemo', width: 420, height: 360 })
+  /* 3) 위치 지정 ------------------------------------------------------- */
+  // 설정값은 열 때마다 최신 render 값을 읽으므로 state 로 바로 지정 가능
+  const positionPopup = usePopup({
+    url: USER_SEARCH_POPUP_URL,
+    name: 'positionDemo',
+    width: 420,
+    height: 360,
+    position: POSITION_OPTIONS[positionIdx].value,
+  })
 
   const handleOpenPosition = () => {
-    const { label, value } = POSITION_OPTIONS[positionIdx]
     try {
-      // 훅 설정값(width/height)에 열 때마다 override 가능
-      positionPopup.open({ keyword: '' }, { position: value })
-      addLog(`위치 지정 팝업 오픈: ${label}`)
+      positionPopup.open({ keyword: '' })
+      addLog(`위치 지정 팝업 오픈: ${POSITION_OPTIONS[positionIdx].label}`)
     } catch (e) {
       handleError(e)
     }
   }
 
-  /* 5) 기타 ------------------------------------------------------------ */
+  /* 4) 기타 ------------------------------------------------------------ */
   const handleOpenExternal = () => {
     try {
       // 훅 없이 함수로 바로 여는 것도 가능 (외부 URL 은 postMessage 통신 불가, 단순 오픈만)
@@ -138,9 +134,9 @@ export function PopupDemoPage() {
     <section>
       <h1>Window Popup</h1>
       <p className="desc">
-        부모 컴포넌트는 <code>usePopup</code> 훅(<code>src/shared/hooks/usePopup.ts</code>), 팝업 페이지는{' '}
-        <code>usePopupData</code> / <code>closeSelf</code> / <code>requestOpener</code> 를 사용합니다. 저수준 함수는{' '}
-        <code>src/shared/utils/popup.ts</code>.
+        <code>src/shared/lib/popup</code> 사용 예제. 부모 컴포넌트는 <code>usePopup</code>, 팝업 페이지는{' '}
+        <code>usePopupData</code> / <code>sendToOpener</code> / <code>closeSelf</code> 를 사용합니다. 데이터는 복사되어
+        전달되므로 부모와 팝업의 데이터는 서로 독립입니다.
       </p>
 
       <div className="card">
@@ -158,12 +154,12 @@ export function PopupDemoPage() {
       </div>
 
       <div className="card">
-        <h2>2. 콜백 전달 — handlers + 반환값</h2>
+        <h2>2. 팝업 → 부모 콜백, 부모 → 팝업 data 갱신</h2>
         <p className="desc">
           <code>usePopup({'{ url, handlers, onClose }'})</code> + <code>popup.open(data)</code> — 팝업이{' '}
-          <code>requestOpener('add-user', user)</code> 를 호출하면 부모의 콜백이 실행되고, 반환값(성공/실패 메시지)이
-          팝업으로 돌아갑니다. 중복 또는 {MAX_MULTI}명 초과 시 거절. handler 안에서 state 를 그대로 읽어도 항상
-          최신값입니다(훅이 ref 로 관리). 부모 목록이 바뀌면 <code>popup.update(data)</code>로 팝업도 동기화됩니다.
+          <code>sendToOpener('add-user', user)</code> 를 호출하면 부모의 콜백이 실행됩니다. handler 안에서 state 를
+          그대로 읽어도 항상 최신값입니다. 부모 목록이 바뀌면 <code>popup.update(data)</code>로 팝업도 동기화되어 이미
+          추가된 사용자와 {MAX_MULTI}명 초과는 팝업에서 비활성화됩니다.
         </p>
         <div className="btn-row">
           <button onClick={handleOpenMulti}>다중 선택 팝업 열기</button>
@@ -189,20 +185,7 @@ export function PopupDemoPage() {
       </div>
 
       <div className="card">
-        <h2>3. 부모 → 팝업 메시지 — popup.send</h2>
-        <p className="desc">
-          2번 팝업이 열려 있을 때 전송하세요. 팝업은 <code>usePopupMessage('notice', ...)</code> 로 수신합니다.
-        </p>
-        <div className="form-row">
-          <input className="input inline" value={notice} onChange={(e) => setNotice(e.target.value)} />
-          <button onClick={handleSendNotice} disabled={!multiPopup.isOpen}>
-            팝업에 전송
-          </button>
-        </div>
-      </div>
-
-      <div className="card">
-        <h2>4. 위치 지정 — position</h2>
+        <h2>3. 위치 지정 — position</h2>
         <p className="desc">
           <code>'center'</code>(브라우저 창 기준, 기본) / <code>'screen-center'</code>(모니터 기준) /{' '}
           <code>{'{ left, top }'}</code>(모니터 좌표). 화면 밖 좌표는 현재 모니터 안으로 보정됩니다.
@@ -220,7 +203,7 @@ export function PopupDemoPage() {
       </div>
 
       <div className="card">
-        <h2>5. 기타</h2>
+        <h2>4. 기타</h2>
         <div className="btn-row">
           <button onClick={handleOpenExternal}>외부 URL 팝업</button>
           <button className="secondary" onClick={closeAllPopups}>

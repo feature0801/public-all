@@ -4,5 +4,4 @@ export {
   USER_SEARCH_POPUP_URL,
   USER_SEARCH_MSG,
   type UserSearchPopupData,
-  type AddUserResult,
 } from './model/userSearchContract'
