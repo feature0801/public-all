@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { CUSTOMER_SEARCH_MSG, customerQueries, type Customer, type CustomerSearchPopupData } from '@/domains/customer'
+import { customerQueries, type Customer } from '@/domains/customer'
 import { formatBizNo } from '@/shared/lib/format'
 import { closeSelf, isOpenedAsPopup, usePopupData } from '@/shared/lib/popup'
 
-/** 거래처 검색 팝업 — 행 더블클릭 또는 선택 버튼으로 부모에 전달 */
+/** 거래처 검색 팝업 — 행 더블클릭 또는 선택 버튼으로 부모에 전달. 부모 data 는 CustomerSearchPopupData */
 export function CustomerSearchPopup() {
-  const { data, received } = usePopupData<CustomerSearchPopupData>()
+  const { data, received } = usePopupData()
   // 사용자가 입력하기 전(null)에는 부모가 넘긴 검색어 사용
   const [keywordInput, setKeyword] = useState<string | null>(null)
   const keyword = keywordInput ?? data?.keyword ?? ''
@@ -28,7 +28,7 @@ export function CustomerSearchPopup() {
     else setSearched(keyword)
   }
 
-  const select = (c: Customer) => closeSelf(CUSTOMER_SEARCH_MSG.SELECT, c)
+  const select = (c: Customer) => closeSelf(c)
 
   return (
     <div>

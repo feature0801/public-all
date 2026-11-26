@@ -6,10 +6,10 @@ import { subscribeOpenerData } from './popup'
  * - received : 부모로부터 data 를 받았는지 (부모 없이 직접 열린 경우 계속 false)
  *
  * @example
- * const { data, received } = usePopupData<UserSearchPopupData>()
+ * const { data, received } = usePopupData()
  */
-export function usePopupData<T>(): { data: T | undefined; received: boolean } {
-  const [state, setState] = useState<{ data: T | undefined; received: boolean }>({ data: undefined, received: false })
-  useEffect(() => subscribeOpenerData((data) => setState({ data: data as T, received: true })), [])
+export function usePopupData(): { data: any; received: boolean } {
+  const [state, setState] = useState({ data: undefined as any, received: false })
+  useEffect(() => subscribeOpenerData((data) => setState({ data, received: true })), [])
   return state
 }

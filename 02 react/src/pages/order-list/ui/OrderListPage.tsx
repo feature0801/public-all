@@ -2,13 +2,7 @@ import { useWatch, type Control } from 'react-hook-form'
 import dayjs from 'dayjs'
 import { orderQueries, type Order } from '@/domains/order'
 import { CODE_GROUP, usePrefetchCommonCodes } from '@/domains/common-code'
-import {
-  CUSTOMER_SEARCH_MSG,
-  CUSTOMER_SEARCH_POPUP_NAME,
-  CUSTOMER_SEARCH_POPUP_URL,
-  type Customer,
-  type CustomerSearchPopupData,
-} from '@/domains/customer'
+import { CUSTOMER_SEARCH_POPUP_URL, type CustomerSearchPopupData } from '@/domains/customer'
 import { AppGrid } from '@/shared/ui/data-grid'
 import { Pagination } from '@/shared/ui/pagination'
 import {
@@ -28,7 +22,7 @@ import {
   type LookupValue,
 } from '@/shared/ui/search-form'
 import { formatBizNo } from '@/shared/lib/format'
-import { openPopupForResult, PopupBlockedError } from '@/shared/lib/popup'
+import { usePopup } from '@/shared/lib/popup'
 import { orderColumns } from '../model/orderColumns'
 import { ORDER_SERVER_FIELD_MAP, toOrderSearchParams } from '../model/orderSearchParams'
 import {
@@ -38,21 +32,6 @@ import {
   type OrderSearchForm,
   type OrderSearchValues,
 } from '../model/orderSearchSchema'
-
-/** 거래처 팝업 → { code, name } */
-async function lookupCustomer(current: LookupValue): Promise<LookupValue | null> {
-  try {
-    const c = await openPopupForResult<Customer>(CUSTOMER_SEARCH_POPUP_URL, CUSTOMER_SEARCH_POPUP_NAME, CUSTOMER_SEARCH_MSG.SELECT, {
-      width: 560,
-      height: 620,
-      data: { keyword: current.name } satisfies CustomerSearchPopupData,
-    })
-    return c ? { code: c.custCd, name: c.custNm } : null
-  } catch (e) {
-    if (e instanceof PopupBlockedError) alert(e.message)
-    return null
-  }
-}
 
 /** 조회 직전 예외 처리 — 기간이 길면 확인 */
 function confirmLongRange(values: OrderSearchValues): boolean {
@@ -66,6 +45,14 @@ export function OrderListPage() {
   usePrefetchCommonCodes([CODE_GROUP.ORDER_STATUS, CODE_GROUP.DEPT, CODE_GROUP.PAY_METHOD])
 
   const grid = useGridSearch(orderQueries.search, { pageSize: 20 })
+
+  // 거래처 팝업 → { code, name }. 페이지를 벗어나면 팝업도 닫힌다
+  const customerPopup = usePopup({ url: CUSTOMER_SEARCH_POPUP_URL, width: 560, height: 620 })
+  const lookupCustomer = async (current: LookupValue): Promise<LookupValue | null> => {
+    const data: CustomerSearchPopupData = { keyword: current.name }
+    const c = await customerPopup.openForResult(data)
+    return c ? { code: c.custCd, name: c.custNm } : null
+  }
 
   const { form, submit, reset, searching } = useSearchForm({
     schema: orderSearchSchema,

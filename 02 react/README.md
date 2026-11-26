@@ -150,18 +150,19 @@ react-hook-form + zod + AG Grid. ERP 처럼 검색 필드가 많고 예외 규�
 
 | API | 사용 위치 | 설명 |
 | --- | --- | --- |
-| `usePopup({ url, width, height, position, handlers, onClose })` | 부모 (컴포넌트) | `open(data)` / `openForResult(type, data)` / `update(data)` / `close()` / `isOpen`. handlers 는 항상 최신 state 사용, 언마운트 시 팝업 닫음 |
-| `openPopup(url, name, options)` | 부모 (컴포넌트 밖) | 훅 없이 오픈. 차단 시 `PopupBlockedError`, 보낼 수 없는 data 면 `PopupDataError` |
-| `openPopupForResult<T>(url, name, resultType, options)` | 부모 (컴포넌트 밖) | 팝업이 결과를 보내면 resolve, 그냥 닫히면 `null` |
+| `usePopup({ url, width, height, position, handlers, onClose, onBlocked })` | 부모 (컴포넌트) | `open(data)` / `openForResult(data)` / `update(data)` / `close()` / `isOpen`. handlers 는 항상 최신 state 사용, 언마운트 시 팝업 닫음. **컴포넌트 안에서는 항상 이 훅 사용** |
+| `openPopup(url, name, options)` | 부모 (컴포넌트 밖) | 훅 없이 오픈. 차단 시 `onBlocked`(기본 alert) 후 `null`, 보낼 수 없는 data 면 `PopupDataError` throw |
+| `openPopupForResult(url, name, options)` | 부모 (컴포넌트 밖) | 팝업이 `closeSelf(result)` 로 보낸 값으로 resolve, 그냥 닫히거나 차단되면 `null` |
 | `closeAllPopups()` | 부모 | 이 창에서 연 팝업 모두 닫기 (로그아웃 등) |
-| `usePopupData<T>()` | 팝업 | 부모가 넘긴 data 수신 (부모가 update 하면 갱신) |
+| `usePopupData()` | 팝업 | 부모가 넘긴 data 수신 (부모가 update 하면 갱신) |
 | `sendToOpener(type, payload)` | 팝업 | 부모의 `handlers[type]` 실행 |
-| `closeSelf(type?, payload?)` | 팝업 | 결과 전송 후 닫기 |
+| `closeSelf(result?)` | 팝업 | 결과 전송 후 닫기. 인자 없으면 그냥 닫기 |
 
 - `position`: `'center'`(부모 창 기준, 기본) / `'screen-center'`(모니터 기준) / `{ left, top }`. 모니터 밖으로 나가지 않게 보정
 - data 는 연 시점에 **복사**되어 전달된다 → 부모/팝업 데이터는 서로 독립. 반영은 `update()`(부모→팝업), `handlers`(팝업→부모)로만
 - 함수, AG Grid RowNode 등은 보낼 수 없다 → 그리드는 `getSelectedRows()` 를 넘긴다
 - 같은 name 으로 다시 열면 이전 팝업은 닫힌 것으로 처리(`onClose`)하고 같은 창에 새로 로드한다
+- 팝업이 차단되면 라이브러리가 alert 를 띄운다 → 호출하는 쪽에서 try/catch 불필요 (`onBlocked` 로 변경 가능)
 - `open()` 은 클릭 핸들러 안에서 바로 호출 (`await` 뒤나 `useEffect` 안이면 브라우저가 차단)
 
 ### 데이터 / 콜백 흐름
@@ -173,7 +174,7 @@ open(data) / openPopup({ data, handlers }) ─▶ (로드)
           ── INIT(data 복사본) ────────────▶  data 수신
 update(data)                ── INIT ──────▶  data 갱신
 handlers[type](payload)     ◀─────────────  sendToOpener(type, payload)
-openForResult 결과 / onClose ◀─────────────  closeSelf(type, payload)
+openForResult 결과 / onClose ◀─────────────  closeSelf(result)
 ```
 
 ```tsx
@@ -185,15 +186,15 @@ const userPopup = usePopup({
   handlers: { [USER_SEARCH_MSG.ADD]: (u: User) => addUser(u) }, // 팝업이 호출할 콜백
 })
 userPopup.open({ keyword, selectedIds })                                        // 화면 데이터 → 팝업
-const user = await userPopup.openForResult<User>(USER_SEARCH_MSG.SELECT, { keyword }) // 결과 받기
+const user = await userPopup.openForResult({ keyword })                         // 결과 받기 (닫히면 null)
 
 // 팝업
-const { data } = usePopupData<UserSearchPopupData>()
+const { data } = usePopupData()
 sendToOpener(USER_SEARCH_MSG.ADD, user)   // 부모 콜백 실행
-closeSelf(USER_SEARCH_MSG.SELECT, user)   // 결과 보내고 닫기
+closeSelf(user)                           // 결과 보내고 닫기
 ```
 
 ### 새 팝업 추가하는 방법
-1. 관련 도메인의 `model/xxxContract.ts` 에 URL, 메시지 type, data 타입 정의 (`domains/user/model/userSearchContract.ts` 참고) 후 도메인 `index.ts` 에서 export
+1. 관련 도메인의 `model/xxxContract.ts` 에 URL, (필요하면) 메시지 type, data 형태 정의 (`domains/user/model/userSearchContract.ts` 참고) 후 도메인 `index.ts` 에서 export
 2. `pages/xxx-popup/ui/XxxPopup.tsx` + `index.ts` 작성 후 `app/router/router.tsx` 의 `/popup` children 에 등록 → `PopupLayout`(메뉴 없음)으로 렌더링
-3. 부모에서 `usePopup` (컴포넌트 밖이면 `openPopupForResult`) 로 호출
+3. 부모에서 `usePopup` 으로 호출 (컴포넌트 밖에서만 `openPopup` / `openPopupForResult`)

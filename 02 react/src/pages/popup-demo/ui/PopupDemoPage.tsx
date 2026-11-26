@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import {
-  USER_SEARCH_MSG,
-  USER_SEARCH_POPUP_URL,
-  type User,
-  type UserSearchPopupData,
-} from '@/domains/user'
-import { closeAllPopups, openPopup, PopupBlockedError, usePopup, type PopupPosition } from '@/shared/lib/popup'
+import { USER_SEARCH_MSG, USER_SEARCH_POPUP_URL, type User, type UserSearchPopupData } from '@/domains/user'
+import { closeAllPopups, usePopup, type PopupPosition } from '@/shared/lib/popup'
 
 const MAX_MULTI = 3
 
@@ -26,27 +21,19 @@ export function PopupDemoPage() {
   const addLog = (msg: string) =>
     setLog((prev) => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 30))
 
-  const handleError = (e: unknown) => {
-    if (e instanceof PopupBlockedError) alert(e.message)
-    else throw e
-  }
-
   /* 1) 화면 데이터 전달 + 결과 받기 ------------------------------------ */
   const singlePopup = usePopup({ url: USER_SEARCH_POPUP_URL, name: 'userSearch', width: 480, height: 600 })
 
   const handleSelectUser = async () => {
     const data: UserSearchPopupData = { keyword, selectedIds: selected ? [selected.id] : [] }
-    try {
-      addLog(`단일 선택 팝업 오픈 — data: ${JSON.stringify(data)}`)
-      const user = await singlePopup.openForResult<User>(USER_SEARCH_MSG.SELECT, data)
-      if (user) {
-        setSelected(user)
-        addLog(`선택 결과 수신: ${user.name}`)
-      } else {
-        addLog('선택 없이 팝업이 닫힘 (null)')
-      }
-    } catch (e) {
-      handleError(e)
+    addLog(`단일 선택 팝업 오픈 — data: ${JSON.stringify(data)}`)
+    // 팝업의 closeSelf(user) 값. 그냥 닫히거나 차단되면 null (차단 alert 는 라이브러리가 띄움)
+    const user: User | null = await singlePopup.openForResult(data)
+    if (user) {
+      setSelected(user)
+      addLog(`선택 결과 수신: ${user.name}`)
+    } else {
+      addLog('선택 없이 팝업이 닫힘 (null)')
     }
   }
 
@@ -69,33 +56,25 @@ export function PopupDemoPage() {
     onClose: () => addLog('다중 선택 팝업 닫힘 (onClose)'),
   })
 
-  // 팝업을 연 시점의 검색어 유지 (부모 입력 중에 팝업 검색어가 바뀌지 않도록)
+  // 팝업을 연 시점의 검색어 (update 는 data 전체를 바꾸므로, 부모 입력 중에 팝업 검색어가 바뀌지 않도록 보관)
   const multiKeywordRef = useRef('')
+  const buildMultiData = (users: User[]): UserSearchPopupData => ({
+    multi: true,
+    max: MAX_MULTI,
+    keyword: multiKeywordRef.current,
+    selectedIds: users.map((u) => u.id),
+  })
 
   const handleOpenMulti = () => {
     multiKeywordRef.current = keyword
-    try {
-      multiPopup.open({
-        multi: true,
-        max: MAX_MULTI,
-        keyword,
-        selectedIds: multi.map((u) => u.id),
-      } satisfies UserSearchPopupData)
-      addLog('다중 선택 팝업 오픈')
-    } catch (e) {
-      handleError(e)
-    }
+    multiPopup.open(buildMultiData(multi))
+    addLog('다중 선택 팝업 오픈')
   }
 
   // 부모 화면의 목록이 바뀌면 열려 있는 팝업 data 도 갱신 → 팝업의 "선택됨" 표시가 동기화됨
   const { update: updateMulti } = multiPopup
   useEffect(() => {
-    updateMulti({
-      multi: true,
-      max: MAX_MULTI,
-      keyword: multiKeywordRef.current,
-      selectedIds: multi.map((u) => u.id),
-    } satisfies UserSearchPopupData)
+    updateMulti(buildMultiData(multi)) // buildMultiData 는 ref 만 읽으므로 의존성 불필요
   }, [multi, updateMulti])
 
   const handleRemove = (id: number) => setMulti((prev) => prev.filter((u) => u.id !== id))
@@ -111,23 +90,16 @@ export function PopupDemoPage() {
   })
 
   const handleOpenPosition = () => {
-    try {
-      positionPopup.open({ keyword: '' })
-      addLog(`위치 지정 팝업 오픈: ${POSITION_OPTIONS[positionIdx].label}`)
-    } catch (e) {
-      handleError(e)
-    }
+    positionPopup.open({ keyword: '' })
+    addLog(`위치 지정 팝업 오픈: ${POSITION_OPTIONS[positionIdx].label}`)
   }
 
   /* 4) 기타 ------------------------------------------------------------ */
+  // 외부 URL 은 postMessage 통신 불가, 단순 오픈만
+  const externalPopup = usePopup({ url: 'https://react.dev', width: 1000, height: 700, position: 'screen-center' })
   const handleOpenExternal = () => {
-    try {
-      // 훅 없이 함수로 바로 여는 것도 가능 (외부 URL 은 postMessage 통신 불가, 단순 오픈만)
-      openPopup('https://react.dev', 'external', { width: 1000, height: 700, position: 'screen-center' })
-      addLog('외부 URL 팝업 오픈')
-    } catch (e) {
-      handleError(e)
-    }
+    externalPopup.open()
+    addLog('외부 URL 팝업 오픈')
   }
 
   return (
@@ -142,8 +114,8 @@ export function PopupDemoPage() {
       <div className="card">
         <h2>1. 화면 데이터 → 팝업, 결과 받기</h2>
         <p className="desc">
-          <code>popup.openForResult('select-user', data)</code> — 입력한 검색어와 현재 선택값을
-          팝업에 넘기고, 선택 결과를 Promise 로 받습니다. 그냥 닫으면 <code>null</code>.
+          <code>popup.openForResult(data)</code> — 입력한 검색어와 현재 선택값을
+          팝업에 넘기고, 팝업이 <code>closeSelf(user)</code> 로 보낸 결과를 Promise 로 받습니다. 그냥 닫으면 <code>null</code>.
         </p>
         <div className="form-row">
           <label>검색어</label>

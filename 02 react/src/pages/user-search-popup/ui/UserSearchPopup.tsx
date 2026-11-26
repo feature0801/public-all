@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { USER_SEARCH_MSG, type User, type UserSearchPopupData } from '@/domains/user'
+import { USER_SEARCH_MSG, type User } from '@/domains/user'
 import { closeSelf, isOpenedAsPopup, sendToOpener, usePopupData } from '@/shared/lib/popup'
 
 const MOCK_USERS: User[] = [
@@ -13,13 +13,13 @@ const MOCK_USERS: User[] = [
 
 /**
  * 사용자 검색 팝업
- * - 부모가 넘긴 data(검색어, 선택된 id, 모드)로 초기화
- * - 단일 모드 : 선택 → closeSelf(SELECT) 로 결과 전달 후 닫힘
+ * - 부모가 넘긴 data(UserSearchPopupData: 검색어, 선택된 id, 모드)로 초기화
+ * - 단일 모드 : 선택 → closeSelf(user) 로 결과 전달 후 닫힘
  * - 다중 모드 : sendToOpener(ADD) 로 부모 콜백 호출. 부모가 update 로 보내주는 selectedIds 로
  *               이미 추가된 사용자 / 최대 인원 도달 시 버튼을 비활성화한다
  */
 export function UserSearchPopup() {
-  const { data, received } = usePopupData<UserSearchPopupData>()
+  const { data, received } = usePopupData()
   // 사용자가 입력하기 전(null)에는 부모가 넘긴 검색어를 사용
   const [keywordInput, setKeyword] = useState<string | null>(null)
   const keyword = keywordInput ?? data?.keyword ?? ''
@@ -35,7 +35,7 @@ export function UserSearchPopup() {
 
   const handleSelect = (user: User) => {
     if (isMulti) sendToOpener(USER_SEARCH_MSG.ADD, user) // 부모의 handlers['add-user'] 실행
-    else closeSelf(USER_SEARCH_MSG.SELECT, user)
+    else closeSelf(user)
   }
 
   return (

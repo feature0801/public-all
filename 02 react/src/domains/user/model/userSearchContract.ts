@@ -1,16 +1,15 @@
 /**
  * 사용자 검색 팝업의 "계약" — 부모와 팝업이 같이 import 해서
- * URL / 메시지 type / 데이터 타입을 한 곳에서 관리한다.
+ * URL / 메시지 type / 데이터 형태를 한 곳에서 관리한다.
  * 새 팝업을 만들 때 이 파일 형태를 복사해서 사용.
+ * - 결과 : closeSelf(user) → 부모의 openForResult 가 User 를 받음 (메시지 type 불필요)
  */
 
 export const USER_SEARCH_POPUP_URL = '/popup/user-search'
 
-/** 메시지 type */
+/** 팝업이 열린 채로 부모를 호출할 때의 메시지 type (sendToOpener → 부모 handlers) */
 export const USER_SEARCH_MSG = {
-  /** 단일 선택 결과 (팝업 → 부모, 팝업 닫힘) */
-  SELECT: 'select-user',
-  /** 다중 모드 추가 요청 (팝업 → 부모 handler) */
+  /** 다중 모드 추가 요청 */
   ADD: 'add-user',
 } as const
 

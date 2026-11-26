@@ -13,7 +13,7 @@ interface LookupFieldProps {
 
 /**
  * 코드 + 명칭 조회 필드 (거래처, 품목, 사원 등 ERP 의 "돋보기" 필드)
- * 실제 선택은 onLookup 에서 팝업(openPopupForResult) 등으로 처리한다.
+ * 실제 선택은 onLookup 에서 팝업(usePopup 의 openForResult) 등으로 처리한다.
  */
 export function LookupField({ name, onLookup, placeholder = '검색 버튼으로 선택', disabled }: LookupFieldProps) {
   const { control } = useFormContext()
